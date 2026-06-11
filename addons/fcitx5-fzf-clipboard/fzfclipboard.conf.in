@@ -1,0 +1,13 @@
+[Addon]
+Name=FZF Clipboard
+Comment=Fuzzy-search clipboard history. Runs side-by-side with the upstream clipboard addon.
+Type=SharedLibrary
+Library=libfzfclipboard
+Category=Module
+Version=@PROJECT_VERSION@
+OnDemand=False
+Configurable=True
+
+[Addon/Dependencies]
+0=core:5.1.19
+1=dbus:5.1.19
