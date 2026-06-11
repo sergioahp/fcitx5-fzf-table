@@ -4,4 +4,5 @@ result-*
 build/
 build-*/
 .direnv/
-
+tmp/
+outputs/

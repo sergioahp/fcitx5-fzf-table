@@ -34,11 +34,7 @@
         fzftable = libfzfmatch;
         fcitx5-fzf-table = fcitx5FzfTable;
 
-        # Reference fcitx5 builds kept from the earlier diagnostic phase.
-        fcitx5             = pkgs.fcitx5;
-        fcitx5-with-addons = pkgs.qt6Packages.fcitx5-with-addons.override {
-          addons = with pkgs; [ fcitx5-mozc fcitx5-gtk kdePackages.fcitx5-qt ];
-        };
+        # Convenience package for local testing with stock fcitx5.
         fcitx5-with-fzf-table = pkgs.qt6Packages.fcitx5-with-addons.override {
           addons = with pkgs; [
             fcitx5-mozc

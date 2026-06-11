@@ -8,8 +8,8 @@ namespace fzfmatch {
 
 namespace {
 
-// Sorted by source codepoint. Generated from external/fzf/src/algo/normalize.go
-// at commit v0.65.2 via awk + sort, see PLAN.md.
+// Sorted by source codepoint. Generated from fzf's normalize.go at v0.65.2
+// via awk + sort.
 constexpr std::array<std::pair<char32_t, char32_t>, 496> kNormalizeTable{{
 #include "normalize_table.inc"
 }};

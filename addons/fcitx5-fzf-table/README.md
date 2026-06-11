@@ -16,8 +16,8 @@ with `libfzfmatch`.
 
 - One shared-library addon: `lib/fcitx5/libfzftable.so`
 - One addon manifest: `share/fcitx5/addon/fzftable.conf`
-- Four IME definitions: `share/fcitx5/inputmethod/fzf-*.conf`
-- Seed table payloads installed with the addon package
+- Five IME definitions: `share/fcitx5/inputmethod/fzf-*.conf`
+- Table payloads installed with the addon package
 - A fcitx-free search/session core under `libs/fzftable/` with gtests
 
 ## Runtime behavior
@@ -63,9 +63,8 @@ CaseMode=Smart
 - `share/fcitx5/inputmethod/fzf-*.conf`
 - `share/fcitx5/fzf-table/*.tab`
 
-## What is still missing
+## Known gaps
 
-- M2 real data pipelines instead of seed tables
-- M3 golden tests against upstream `fzf`
-- M5 clipboard rework on top of the same matcher/session core
-- M6 end-to-end VM/UI automation
+- Kaomoji and IPA still use seed tables.
+- Golden tests against upstream `fzf` are still pending.
+- End-to-end fcitx UI automation is still pending.
