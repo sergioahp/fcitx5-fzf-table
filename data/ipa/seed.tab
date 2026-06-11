@@ -1,0 +1,46 @@
+# Seed IPA symbol table.
+p	p	voiceless bilabial plosive
+b	b	voiced bilabial plosive
+t	t	voiceless alveolar plosive
+d	d	voiced alveolar plosive
+k	k	voiceless velar plosive
+g	g	voiced velar plosive
+ʔ	glottal stop	voiceless glottal plosive
+m	m	bilabial nasal
+n	n	alveolar nasal
+ŋ	eng	velar nasal
+ɲ	enya	palatal nasal
+f	f	voiceless labiodental fricative
+v	v	voiced labiodental fricative
+θ	theta	voiceless dental fricative
+ð	eth	voiced dental fricative
+s	s	voiceless alveolar fricative
+z	z	voiced alveolar fricative
+ʃ	esh	voiceless postalveolar fricative
+ʒ	ezh	voiced postalveolar fricative
+h	h	voiceless glottal fricative
+ɦ	hooked h	voiced glottal fricative
+l	l	alveolar lateral approximant
+ɹ	turned r	alveolar approximant
+j	j	palatal approximant	yod
+w	w	labial velar approximant
+ɾ	flap	alveolar tap	flap
+r	rolled r	alveolar trill
+i	i	close front unrounded vowel
+y	y	close front rounded vowel
+ɨ	barred i	close central unrounded
+u	u	close back rounded vowel
+ɯ	turned m	close back unrounded
+ɪ	small capital i	near close near front unrounded
+ʊ	upsilon	near close near back rounded
+e	e	close mid front unrounded
+ø	o slash	close mid front rounded
+ɛ	open e	open mid front unrounded
+œ	oe ligature	open mid front rounded
+ə	schwa	mid central
+ɔ	open o	open mid back rounded
+ʌ	turned v	open mid back unrounded
+a	a	open front unrounded
+ɑ	script a	open back unrounded
+ɒ	turned script a	open back rounded
+æ	ash	near open front unrounded
