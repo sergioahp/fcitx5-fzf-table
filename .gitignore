@@ -1,0 +1,7 @@
+external/
+result
+result-*
+build/
+build-*/
+.direnv/
+

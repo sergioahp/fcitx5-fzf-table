@@ -1,0 +1,7 @@
+option('tests', type : 'boolean', value : true, description : 'Build and run unit tests')
+option(
+  'fcitx5_addon',
+  type : 'boolean',
+  value : false,
+  description : 'Build the fcitx5 fuzzy table input-method addon',
+)
