@@ -61,12 +61,12 @@ constexpr std::array<TableSpec, 5> kTableSpecs{{
      "*", '\0'},
     {"fzf-kaomoji", "Kaomoji", "Kaomoji (FZF)", "kaomoji.tab",
      "input-keyboard", "kao", "*", '\0'},
-    {"fzf-latex", "LaTeX", "LaTeX (FZF)", "latex.tab", "input-keyboard",
-     "tex", "*", '\\'},
+    {"fzf-latex", "LaTeX", "LaTeX (FZF)", "latex.tab", "fcitx5-fzf-latex",
+      "tex", "*", '\\'},
     {"fzf-ipa", "IPA", "IPA (FZF)", "ipa.tab", "input-keyboard", "ipa", "*",
-     '\0'},
-    {"fzf-typst", "Typst", "Typst (FZF)", "typst.tab", "input-keyboard",
-     "typ", "*", '\\'},
+      '\0'},
+    {"fzf-typst", "Typst", "Typst (FZF)", "typst.tab", "fcitx5-fzf-typst",
+      "typ", "*", '\\'},
 }};
 
 fzfmatch::CaseMode parse_case_mode(std::string_view value) {

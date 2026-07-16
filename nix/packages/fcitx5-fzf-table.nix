@@ -19,6 +19,9 @@ stdenv.mkDerivation {
     ];
   };
 
+  # Logo SVGs for the LaTeX / Typst input-method icons, installed in
+  # postInstall (referenced inline above as a path literal).
+
   # wl-clipboard is both a build-time dep (meson find_program at configure
   # time pins wl-paste's store path into the addon binary) and a runtime
   # dep (the addon execs it). Adding it to buildInputs covers both.
@@ -37,6 +40,11 @@ stdenv.mkDerivation {
     install -Dm644 ${tablesLatex}/latex.tab     $out/share/fcitx5/fzf-table/latex.tab
     install -Dm644 ${tablesIpa}/ipa.tab         $out/share/fcitx5/fzf-table/ipa.tab
     install -Dm644 ${tablesTypst}/typst.tab     $out/share/fcitx5/fzf-table/typst.tab
+
+    install -Dm644 ${../../assets}/logos/latex/latex-l-white.svg \
+      $out/share/icons/hicolor/scalable/apps/fcitx5-fzf-latex.svg
+    install -Dm644 ${../../assets}/logos/typst/typst-t-color.svg \
+      $out/share/icons/hicolor/scalable/apps/fcitx5-fzf-typst.svg
   '';
 
   meta = with lib; {
