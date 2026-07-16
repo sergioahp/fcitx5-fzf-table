@@ -28,17 +28,17 @@ with `libfzfmatch`.
   fuzzy, exact (`'foo`), prefix (`^foo`), suffix (`foo$`), equal (`=foo`),
   inverse (`!foo`), AND by spaces, OR by `|`.
 - Candidate window shows the top `PageSize` hits.
-- `Enter` commits the highlighted candidate.
-- `Alt+1..0` commits a visible candidate directly.
+- `Tab` commits the highlighted candidate.
 - Global prev/next candidate and page keys from fcitx still work.
 - `BackSpace` edits the query buffer.
 - `Escape` clears the current search UI.
-- `fzf-typst` uses the same transparent `\` trigger as `fzf-latex`, then
-  `Tab` / `Shift+Tab` cycle style preference: plain, bold, cal, bb, frak,
-  upright.
-
-`Alt+1..0` was chosen instead of plain digits so digits remain available inside
-the query language.
+- `fzf-typst` uses the same transparent `\` trigger as `fzf-latex` for
+  symbol lookup. While idle, `Ctrl+Tab` / `Ctrl+Shift+Tab` cycle styled typing
+  modes and `Ctrl+Alt+0..8` selects normal, bold, italic, bold italic, cal,
+  bold cal, bb, frak, or bold frak directly.
+- In a Typst style mode, ordinary typed characters are committed immediately in
+  that Unicode mathematical style. Characters unavailable in the style fall
+  back to the original typed character.
 
 ## Config
 
@@ -63,8 +63,8 @@ CaseMode=Smart
 - `share/fcitx5/inputmethod/fzf-*.conf`
 - `share/fcitx5/fzf-table/*.tab`
 
-## Known gaps
+## What is still missing
 
 - Kaomoji and IPA still use seed tables.
-- Golden tests against upstream `fzf` are still pending.
-- End-to-end fcitx UI automation is still pending.
+- Golden tests against upstream `fzf`.
+- End-to-end VM/UI automation for candidate window behavior.

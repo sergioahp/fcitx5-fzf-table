@@ -18,12 +18,25 @@ from dataclasses import dataclass
 from pathlib import Path
 
 
-STYLE_KEYWORDS = ("bold", "cal", "bb", "frak")
+STYLE_KEYWORDS = (
+    "bold",
+    "italic",
+    "bolditalic",
+    "cal",
+    "boldcal",
+    "bb",
+    "frak",
+    "boldfrak",
+)
 VARIANT_KEYWORD = {
     "bold": "@variant:bold",
+    "italic": "@variant:italic",
+    "bolditalic": "@variant:bolditalic",
     "cal": "@variant:cal",
+    "boldcal": "@variant:boldcal",
     "bb": "@variant:bb",
     "frak": "@variant:frak",
+    "boldfrak": "@variant:boldfrak",
     "upright": "@variant:upright",
 }
 STYLED_NAME_MARKERS = (
@@ -35,6 +48,33 @@ STYLED_NAME_MARKERS = (
     "SANS-SERIF",
     "MONOSPACE",
 )
+VARIATION_SELECTORS = ("\ufe0e", "\ufe0f")
+SPECIAL_STYLE_CODEPOINTS = {
+    ("italic", "h"): 0x210E,
+    ("cal", "B"): 0x212C,
+    ("cal", "E"): 0x2130,
+    ("cal", "F"): 0x2131,
+    ("cal", "H"): 0x210B,
+    ("cal", "I"): 0x2110,
+    ("cal", "L"): 0x2112,
+    ("cal", "M"): 0x2133,
+    ("cal", "R"): 0x211B,
+    ("cal", "e"): 0x212F,
+    ("cal", "g"): 0x210A,
+    ("cal", "o"): 0x2134,
+    ("bb", "C"): 0x2102,
+    ("bb", "H"): 0x210D,
+    ("bb", "N"): 0x2115,
+    ("bb", "P"): 0x2119,
+    ("bb", "Q"): 0x211A,
+    ("bb", "R"): 0x211D,
+    ("bb", "Z"): 0x2124,
+    ("frak", "C"): 0x212D,
+    ("frak", "H"): 0x210C,
+    ("frak", "I"): 0x2111,
+    ("frak", "R"): 0x211C,
+    ("frak", "Z"): 0x2128,
+}
 
 
 @dataclass(frozen=True)
@@ -90,17 +130,47 @@ def decode_haskell_string(text: str) -> str:
     return "".join(out)
 
 
-def parse_symbols(text: str) -> list[BaseSymbol]:
+def parse_symbols(text: str, emoji_values: set[str]) -> list[BaseSymbol]:
     shorthand_map = parse_shorthands(text)
     symbols: list[BaseSymbol] = []
     for name, _is_accent, _math_class, raw_value in SYMBOL_RE.findall(text):
         value = decode_haskell_string(raw_value)
+        if is_emoji_value(value, emoji_values):
+            continue
         aliases = [f"\\{name}"]
         for shorthand in shorthand_map.get(name, ()):
             aliases.append(f"\\{shorthand}")
         symbols.append(BaseSymbol(name=name, value=value,
                                   aliases=tuple(dedupe(aliases))))
     return symbols
+
+
+def strip_variation_selectors(text: str) -> str:
+    for selector in VARIATION_SELECTORS:
+        text = text.replace(selector, "")
+    return text
+
+
+def load_emoji_values(path: Path | None) -> set[str]:
+    if path is None:
+        return set()
+
+    values: set[str] = set()
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        line = raw.split("#", 1)[0].strip()
+        if not line or ";" not in line:
+            continue
+        codepoints, _status = line.split(";", 1)
+        value = "".join(chr(int(part, 16)) for part in codepoints.split())
+        values.add(value)
+        values.add(strip_variation_selectors(value))
+    return values
+
+
+def is_emoji_value(value: str, emoji_values: set[str]) -> bool:
+    if not emoji_values:
+        return False
+    return value in emoji_values or strip_variation_selectors(value) in emoji_values
 
 
 def parse_shorthands(text: str) -> dict[str, list[str]]:
@@ -154,6 +224,8 @@ def styled_value(base_value: str, style: str) -> str | None:
         return base_value
     if len(base_value) != 1:
         return None
+    if codepoint := SPECIAL_STYLE_CODEPOINTS.get((style, base_value)):
+        return chr(codepoint)
     name = unicodedata.name(base_value, "")
     if not name or any(marker in name for marker in STYLED_NAME_MARKERS):
         return None
@@ -181,9 +253,13 @@ def styled_value(base_value: str, style: str) -> str | None:
 def style_name(style: str, size: str, payload: str) -> str | None:
     style_prefix = {
         "bold": "MATHEMATICAL BOLD",
+        "italic": "MATHEMATICAL ITALIC",
+        "bolditalic": "MATHEMATICAL BOLD ITALIC",
         "cal": "MATHEMATICAL SCRIPT",
+        "boldcal": "MATHEMATICAL BOLD SCRIPT",
         "bb": "MATHEMATICAL DOUBLE-STRUCK",
         "frak": "MATHEMATICAL FRAKTUR",
+        "boldfrak": "MATHEMATICAL BOLD FRAKTUR",
     }.get(style)
     if not style_prefix:
         return None
@@ -232,16 +308,21 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--source", required=True, type=Path,
                     help="path to typst-symbols src/Typst/Symbols.hs")
+    ap.add_argument("--emoji-test", type=Path,
+                    help="Unicode emoji-test.txt used to exclude emoji rows")
     ap.add_argument("--out", required=True, type=Path,
                     help="output typst.tab path")
     args = ap.parse_args()
 
     text = args.source.read_text(encoding="utf-8")
-    symbols = synthetic_base_symbols() + sort_symbols(parse_symbols(text))
+    emoji_values = load_emoji_values(args.emoji_test)
+    symbols = synthetic_base_symbols() + sort_symbols(
+        parse_symbols(text, emoji_values))
     rows = build_rows(symbols)
 
     with args.out.open("w", encoding="utf-8") as f:
         f.write("# typst.tab generated from jgm/typst-symbols.\n")
+        f.write("# Emoji rows from typst-symbols are filtered out.\n")
         f.write("# Hidden @variant:* keywords are used only for IM-side ranking.\n")
         for (value, _variant), keywords in rows.items():
             cols = [value.replace("\t", " ").replace("\n", " ")]

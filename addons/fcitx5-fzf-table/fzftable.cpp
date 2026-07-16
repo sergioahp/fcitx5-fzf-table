@@ -112,17 +112,23 @@ FCITX_CONFIGURATION(
 );
 
 enum class TypstVariantMode {
-    None,
+    Normal,
     Bold,
+    Italic,
+    BoldItalic,
     Cal,
+    BoldCal,
     Bb,
     Frak,
-    Upright,
+    BoldFrak,
 };
 
-constexpr std::array<TypstVariantMode, 6> kTypstVariants = {
-    TypstVariantMode::None, TypstVariantMode::Bold, TypstVariantMode::Cal,
-    TypstVariantMode::Bb,   TypstVariantMode::Frak, TypstVariantMode::Upright,
+constexpr std::array<TypstVariantMode, 9> kTypstVariants = {
+    TypstVariantMode::Normal,     TypstVariantMode::Bold,
+    TypstVariantMode::Italic,     TypstVariantMode::BoldItalic,
+    TypstVariantMode::Cal,        TypstVariantMode::BoldCal,
+    TypstVariantMode::Bb,         TypstVariantMode::Frak,
+    TypstVariantMode::BoldFrak,
 };
 
 constexpr std::string_view kTypstUniqueName = "fzf-typst";
@@ -133,38 +139,202 @@ bool is_typst_spec(const TableSpec *spec) {
 
 std::string_view typst_variant_label(TypstVariantMode mode) {
     switch (mode) {
-    case TypstVariantMode::None:
-        return "plain";
+    case TypstVariantMode::Normal:
+        return "normal";
     case TypstVariantMode::Bold:
         return "bold";
+    case TypstVariantMode::Italic:
+        return "italic";
+    case TypstVariantMode::BoldItalic:
+        return "bold italic";
     case TypstVariantMode::Cal:
         return "cal";
+    case TypstVariantMode::BoldCal:
+        return "bold cal";
     case TypstVariantMode::Bb:
         return "bb";
     case TypstVariantMode::Frak:
         return "frak";
-    case TypstVariantMode::Upright:
-        return "upright";
+    case TypstVariantMode::BoldFrak:
+        return "bold frak";
     }
-    return "plain";
+    return "normal";
 }
 
 std::string_view typst_variant_keyword(TypstVariantMode mode) {
     switch (mode) {
     case TypstVariantMode::Bold:
         return "@variant:bold";
+    case TypstVariantMode::Italic:
+        return "@variant:italic";
+    case TypstVariantMode::BoldItalic:
+        return "@variant:bolditalic";
     case TypstVariantMode::Cal:
         return "@variant:cal";
+    case TypstVariantMode::BoldCal:
+        return "@variant:boldcal";
     case TypstVariantMode::Bb:
         return "@variant:bb";
     case TypstVariantMode::Frak:
         return "@variant:frak";
-    case TypstVariantMode::Upright:
-        return "@variant:upright";
-    case TypstVariantMode::None:
+    case TypstVariantMode::BoldFrak:
+        return "@variant:boldfrak";
+    case TypstVariantMode::Normal:
         return {};
     }
     return {};
+}
+
+bool typst_variant_transforms_text(TypstVariantMode mode) {
+    return mode != TypstVariantMode::Normal;
+}
+
+char32_t typst_style_codepoint(unsigned char ch, TypstVariantMode mode) {
+    const bool upper = ch >= 'A' && ch <= 'Z';
+    const bool lower = ch >= 'a' && ch <= 'z';
+    const bool digit = ch >= '0' && ch <= '9';
+    const auto alpha_index =
+        upper ? ch - 'A' : lower ? ch - 'a' : static_cast<unsigned char>(0);
+    const auto digit_index = digit ? ch - '0' : static_cast<unsigned char>(0);
+
+    constexpr std::array<char32_t, 26> kCalUpper = {
+        0x1D49C, 0x212C,  0x1D49E, 0x1D49F, 0x2130,  0x2131,  0x1D4A2,
+        0x210B,  0x2110,  0x1D4A5, 0x1D4A6, 0x2112,  0x2133,  0x1D4A9,
+        0x1D4AA, 0x1D4AB, 0x1D4AC, 0x211B,  0x1D4AE, 0x1D4AF, 0x1D4B0,
+        0x1D4B1, 0x1D4B2, 0x1D4B3, 0x1D4B4, 0x1D4B5,
+    };
+    constexpr std::array<char32_t, 26> kCalLower = {
+        0x1D4B6, 0x1D4B7, 0x1D4B8, 0x1D4B9, 0x212F,  0x1D4BB, 0x210A,
+        0x1D4BD, 0x1D4BE, 0x1D4BF, 0x1D4C0, 0x1D4C1, 0x1D4C2, 0x1D4C3,
+        0x2134,  0x1D4C5, 0x1D4C6, 0x1D4C7, 0x1D4C8, 0x1D4C9, 0x1D4CA,
+        0x1D4CB, 0x1D4CC, 0x1D4CD, 0x1D4CE, 0x1D4CF,
+    };
+    constexpr std::array<char32_t, 26> kBbUpper = {
+        0x1D538, 0x1D539, 0x2102,  0x1D53B, 0x1D53C, 0x1D53D, 0x1D53E,
+        0x210D,  0x1D540, 0x1D541, 0x1D542, 0x1D543, 0x1D544, 0x2115,
+        0x1D546, 0x2119,  0x211A,  0x211D,  0x1D54A, 0x1D54B, 0x1D54C,
+        0x1D54D, 0x1D54E, 0x1D54F, 0x1D550, 0x2124,
+    };
+    constexpr std::array<char32_t, 26> kFrakUpper = {
+        0x1D504, 0x1D505, 0x212D,  0x1D507, 0x1D508, 0x1D509, 0x1D50A,
+        0x210C,  0x2111,  0x1D50D, 0x1D50E, 0x1D50F, 0x1D510, 0x1D511,
+        0x1D512, 0x1D513, 0x1D514, 0x211C,  0x1D516, 0x1D517, 0x1D518,
+        0x1D519, 0x1D51A, 0x1D51B, 0x1D51C, 0x2128,
+    };
+
+    switch (mode) {
+    case TypstVariantMode::Bold:
+        if (upper) return 0x1D400 + alpha_index;
+        if (lower) return 0x1D41A + alpha_index;
+        if (digit) return 0x1D7CE + digit_index;
+        break;
+    case TypstVariantMode::Italic:
+        if (upper) return 0x1D434 + alpha_index;
+        if (lower) return ch == 'h' ? 0x210E : 0x1D44E + alpha_index;
+        break;
+    case TypstVariantMode::BoldItalic:
+        if (upper) return 0x1D468 + alpha_index;
+        if (lower) return 0x1D482 + alpha_index;
+        break;
+    case TypstVariantMode::Cal:
+        if (upper) return kCalUpper[alpha_index];
+        if (lower) return kCalLower[alpha_index];
+        break;
+    case TypstVariantMode::BoldCal:
+        if (upper) return 0x1D4D0 + alpha_index;
+        if (lower) return 0x1D4EA + alpha_index;
+        break;
+    case TypstVariantMode::Bb:
+        if (upper) return kBbUpper[alpha_index];
+        if (lower) return 0x1D552 + alpha_index;
+        if (digit) return 0x1D7D8 + digit_index;
+        break;
+    case TypstVariantMode::Frak:
+        if (upper) return kFrakUpper[alpha_index];
+        if (lower) return 0x1D51E + alpha_index;
+        break;
+    case TypstVariantMode::BoldFrak:
+        if (upper) return 0x1D56C + alpha_index;
+        if (lower) return 0x1D586 + alpha_index;
+        break;
+    case TypstVariantMode::Normal:
+        break;
+    }
+    return ch;
+}
+
+void append_utf8_codepoint(std::string &out, char32_t cp) {
+    if (cp <= 0x7F) {
+        out.push_back(static_cast<char>(cp));
+    } else if (cp <= 0x7FF) {
+        out.push_back(static_cast<char>(0xC0 | (cp >> 6)));
+        out.push_back(static_cast<char>(0x80 | (cp & 0x3F)));
+    } else if (cp <= 0xFFFF) {
+        out.push_back(static_cast<char>(0xE0 | (cp >> 12)));
+        out.push_back(static_cast<char>(0x80 | ((cp >> 6) & 0x3F)));
+        out.push_back(static_cast<char>(0x80 | (cp & 0x3F)));
+    } else {
+        out.push_back(static_cast<char>(0xF0 | (cp >> 18)));
+        out.push_back(static_cast<char>(0x80 | ((cp >> 12) & 0x3F)));
+        out.push_back(static_cast<char>(0x80 | ((cp >> 6) & 0x3F)));
+        out.push_back(static_cast<char>(0x80 | (cp & 0x3F)));
+    }
+}
+
+std::string typst_transform_text(std::string_view text, TypstVariantMode mode) {
+    if (!typst_variant_transforms_text(mode)) {
+        return std::string(text);
+    }
+
+    std::string out;
+    out.reserve(text.size() * 4);
+    for (unsigned char ch : text) {
+        if (ch < 0x80) {
+            append_utf8_codepoint(out, typst_style_codepoint(ch, mode));
+        } else {
+            out.push_back(static_cast<char>(ch));
+        }
+    }
+    return out;
+}
+
+bool typst_variant_for_direct_key(const Key &key, TypstVariantMode &mode) {
+    const auto states = key.states();
+    if (!states.test(KeyState::Ctrl) || !states.test(KeyState::Alt)) {
+        return false;
+    }
+
+    switch (key.sym()) {
+    case FcitxKey_0:
+        mode = TypstVariantMode::Normal;
+        return true;
+    case FcitxKey_1:
+        mode = TypstVariantMode::Bold;
+        return true;
+    case FcitxKey_2:
+        mode = TypstVariantMode::Italic;
+        return true;
+    case FcitxKey_3:
+        mode = TypstVariantMode::BoldItalic;
+        return true;
+    case FcitxKey_4:
+        mode = TypstVariantMode::Cal;
+        return true;
+    case FcitxKey_5:
+        mode = TypstVariantMode::BoldCal;
+        return true;
+    case FcitxKey_6:
+        mode = TypstVariantMode::Bb;
+        return true;
+    case FcitxKey_7:
+        mode = TypstVariantMode::Frak;
+        return true;
+    case FcitxKey_8:
+        mode = TypstVariantMode::BoldFrak;
+        return true;
+    default:
+        return false;
+    }
 }
 
 class FZFTableEngine;
@@ -183,7 +353,7 @@ public:
 
     void reset(InputContext *input_context) {
         active_spec_ = nullptr;
-        variant_mode_ = TypstVariantMode::None;
+        variant_mode_ = TypstVariantMode::Normal;
         session_.set_table(nullptr);
         clear_query(input_context);
     }
@@ -192,7 +362,7 @@ public:
     const TableSpec *   active_spec_ = nullptr;
     fzftable::Session   session_;
     std::vector<fzftable::Match> visible_matches_;
-    TypstVariantMode variant_mode_ = TypstVariantMode::None;
+    TypstVariantMode variant_mode_ = TypstVariantMode::Normal;
 };
 
 class TableCandidateWord : public CandidateWord {
@@ -263,10 +433,16 @@ public:
             return;
         }
 
+        if (handle_typst_variant_keys(state, key_event)) {
+            return;
+        }
+
         // Trigger-mode IMs: while the session is idle, only the configured
         // trigger char is captured. Everything else (letters, BackSpace,
         // Escape, modified keys, etc.) passes through to the focused app -
         // so the LaTeX IM feels like a regular keyboard until you hit `\`.
+        // Typst additionally has a styled-typing idle mode: when a style is
+        // active, printable text is committed directly after transformation.
         const char trigger =
             state->active_spec_ ? state->active_spec_->trigger_char : '\0';
         if (trigger != '\0' && state->session_.query().empty()) {
@@ -276,11 +452,14 @@ public:
                 state->session_.append(text);
                 rerank_matches(state);
                 update_ui(input_context, state, false);
+            } else if (is_typst_spec(state->active_spec_) &&
+                       typst_variant_transforms_text(state->variant_mode_) &&
+                       !text.empty()) {
+                key_event.filterAndAccept();
+                input_context->commitString(
+                    typst_transform_text(text, state->variant_mode_));
+                update_ui(input_context, state, false);
             }
-            return;
-        }
-
-        if (handle_typst_variant_keys(state, key_event)) {
             return;
         }
 
@@ -464,13 +643,21 @@ private:
             });
     }
 
-    // Typst variant cycle is on Ctrl+Tab / Ctrl+Shift+Tab. Bare Tab is the
-    // commit key (see keyEvent), so the variant chord has to add Ctrl to
-    // disambiguate; Shift+Tab without Ctrl falls through to defaultPrev.
+    // Typst style cycle is on Ctrl+Tab / Ctrl+Shift+Tab. Direct selection is
+    // Ctrl+Alt+0..8, where 0 means normal. Bare Tab is the commit key (see
+    // keyEvent), so the cycle chord has to add Ctrl to disambiguate.
     bool handle_typst_variant_keys(FZFTableState *state, KeyEvent &key_event) {
-        if (!is_typst_spec(state->active_spec_) ||
-            state->session_.query().empty()) {
+        if (!is_typst_spec(state->active_spec_)) {
             return false;
+        }
+
+        TypstVariantMode direct_mode = TypstVariantMode::Normal;
+        if (typst_variant_for_direct_key(key_event.key(), direct_mode)) {
+            key_event.filterAndAccept();
+            state->variant_mode_ = direct_mode;
+            rerank_matches(state);
+            update_ui(key_event.inputContext(), state, false);
+            return true;
         }
 
         auto advance_variant = [state](int delta) {
@@ -503,9 +690,14 @@ private:
                    bool show_empty) {
         input_context->inputPanel().reset();
 
+        const bool typst_styled_idle =
+            is_typst_spec(state->active_spec_) &&
+            typst_variant_transforms_text(state->variant_mode_) &&
+            state->session_.query().empty();
         const bool transparent_idle =
             state->active_spec_ && state->active_spec_->trigger_char != '\0' &&
-            state->session_.query().empty() && !show_empty;
+            state->session_.query().empty() && !show_empty &&
+            !typst_styled_idle;
         if (transparent_idle) {
             input_context->updatePreedit();
             input_context->updateUserInterface(UserInterfaceComponent::InputPanel);

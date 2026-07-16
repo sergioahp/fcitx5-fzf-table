@@ -6,3 +6,4 @@ build-*/
 .direnv/
 tmp/
 outputs/
+reports/
