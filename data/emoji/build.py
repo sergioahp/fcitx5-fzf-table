@@ -17,6 +17,12 @@ use it as a membership filter: any CLDR row whose `cp` (after stripping
 U+FE0F to match CLDR's keying convention) is not in emoji-test.txt is
 dropped.
 
+CLDR keys its annotations with U+FE0F stripped, but emitting that
+stripped form breaks strict renderers: kitty draws e.g. 2764 200D 1F525
+(heart on fire without the variation selector) as a blank cell, while
+lenient shapers (Pango) ligate it anyway. So on output we map each cp
+back to its fully-qualified sequence from emoji-test.txt.
+
 Order is preserved from the input files (annotations.xml first, then
 annotationsDerived.xml), so search ties break in CLDR's authoring order
 (smileys before flags before symbols) rather than codepoint order.
@@ -57,32 +63,37 @@ def load_xml(path: Path) -> dict[str, dict]:
     return out
 
 
-def load_emoji_test(path: Path) -> set[str]:
-    """Build set of FE0F-stripped emoji sequences from emoji-test.txt.
+def load_emoji_test(path: Path) -> dict[str, str]:
+    """Map FE0F-stripped emoji sequences to their qualified form.
 
     Lines look like:
         1F636 200D 1F32B FE0F  ; fully-qualified  # 😶‍🌫️ E13.1 face in clouds
 
     We collect rows of any qualification status (component / fully-qualified
     / minimally-qualified / unqualified). Stripping FE0F lets us compare
-    directly against CLDR's `cp` attribute, which has FE0F removed.
+    directly against CLDR's `cp` attribute, which has FE0F removed. The
+    value keeps the sequence exactly as emoji-test.txt writes it; when
+    several rows share a stripped key, the fully-qualified one wins.
     """
-    out: set[str] = set()
+    out: dict[str, str] = {}
     with path.open(encoding="utf-8") as f:
         for line in f:
             stripped = line.strip()
             if not stripped or stripped.startswith("#"):
                 continue
-            head, sep, _ = stripped.partition(";")
+            head, sep, rest = stripped.partition(";")
             if not sep:
                 continue
             try:
                 chars = "".join(chr(int(c, 16)) for c in head.split())
             except ValueError:
                 continue
-            chars = chars.replace("\ufe0f", "")
-            if chars:
-                out.add(chars)
+            status = rest.split("#", 1)[0].strip()
+            key = chars.replace("\ufe0f", "")
+            if not key:
+                continue
+            if key not in out or status in ("fully-qualified", "component"):
+                out[key] = chars
     return out
 
 
@@ -93,7 +104,7 @@ def load_emoji_test(path: Path) -> set[str]:
 SKIN_TONE_MODIFIERS = frozenset(chr(c) for c in range(0x1F3FB, 0x1F3FF + 1))
 
 
-def is_emoji_cp(cp: str, allowed: set[str]) -> bool:
+def is_emoji_cp(cp: str, allowed: dict[str, str]) -> bool:
     return cp in allowed
 
 
@@ -146,7 +157,7 @@ def main() -> int:
             short = entry["short"] or (entry["keywords"][0] if entry["keywords"] else "")
             if not short and not entry["keywords"]:
                 continue
-            cols = [cp, short, *entry["keywords"]]
+            cols = [allowed[cp], short, *entry["keywords"]]
             cols = [c.replace("\t", " ").replace("\n", " ") for c in cols]
             f.write("\t".join(cols) + "\n")
             rows += 1
